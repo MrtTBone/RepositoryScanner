@@ -1,1 +1,2 @@
 # RepositoryScanner
+[![Build Status](https://dev.azure.com/MrtTBone/RepositoryScanner/_apis/build/status/MrtTBone.RepositoryScanner?branchName=feature%2Fazure-pipelines)](https://dev.azure.com/MrtTBone/RepositoryScanner/_build/latest?definitionId=1&branchName=feature%2Fazure-pipelines)
