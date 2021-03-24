@@ -1,0 +1,231 @@
+@page "/"
+
+@using ProjectAnalyser.API.Experts
+@inject IScanner scanner
+
+<h1>Projects</h1>
+
+@if (projectStats == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h2>Stats</h2>
+    <div>
+        <p><label for="numberOfProject">Number Of Projects</label>&nbsp;<span id="numberOfProject">@projectStats.Projects.Count()</span></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>TargetFramework</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var projectGroup in projectStats.TargetFrameworkStats.OrderBy(x => x.Key))
+                {
+                    <tr>
+                        <td>@projectGroup.Key</td>
+                        <td>@projectGroup.Count()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <h2>Duplicate Projets (@projectStats.DuplicateProjects.Count() Projets)</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>FullPath</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var projectGroup in projectStats.DuplicateProjects)
+                {
+                    <tr>
+                        <td>@projectGroup.Key</td>
+                        <td>
+                            <ul>
+                                @foreach (var project in projectGroup)
+                                {
+                                    <li>@project.FullPath</li>
+                                }
+                            </ul>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <h2>Broken dependancies (@projectStats.BrokenDependancies.Count() Projets, @projectStats.BrokenDependancies.Sum(x => x.BrokenDependancies.Count) broken dependancies</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>FullPath</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var projectGroup in projectStats.BrokenDependancies)
+                {
+                    <tr>
+                        <td>@projectGroup.Project.FullPath</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <ul>
+                                @foreach (var project in projectGroup.BrokenDependancies)
+                                {
+                                    <li>@project</li>
+                                }
+                            </ul>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <h2>Projects</h2>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>TargetFramework</th>
+                    <th>Solutions</th>
+                    <th>Configurations</th>
+                    <th>Reference By</th>
+                    <th>Project Dependancies</th>
+                    <th>Dependancies</th>
+                    <th>FullPath</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var project in projectStats.Projects)
+                {
+                <tr>
+                    <td>@project.Name</td>
+                    <td>@project.TargetFramework</td>
+                    <td>
+                        @project.Configurations.GroupBy(x => x.FileInfo.FullName).Count() Configs Found
+                        <ul>
+                            @foreach (var config in project.Configurations.GroupBy(x => x.FileInfo.FullName))
+                            {
+                                <li>
+                                    @config.Key
+                                    <ul>
+                                        @foreach (var c in config)
+                                        {
+                                            <li>@c.ConfigLine</li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        @project.Solutions.Count Solutions
+                        <ul>
+                            @foreach (var sol in project.Solutions)
+                            {
+                                <li>@sol.FullPath</li>
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        @project.ReferenceBy.Count() Projects
+                        <ul>
+                            @foreach (var sol in project.ReferenceBy)
+                            {
+                                <li>@sol.FullPath</li>
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            @foreach (var dep in project.ProjectDependancies)
+                            {
+                                <li>@dep</li>
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            @foreach (var dep in project.Dependancies)
+                            {
+                                <li>@dep</li>
+                            }
+                        </ul>
+                    </td>
+                    <td>@project.FullPath</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h1>Solutions</h1>
+@if (solutionStats == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h2>Stats</h2>
+    <p><label for="numberOfSolution">Number Of Solutions</label>&nbsp;<span id="numberOfSolution">@solutionStats.Solutions.Count()</span></p>
+
+    <h2>Solutions</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Version</th>
+                <th>Projecs</th>
+                <th>FullPath</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var solution in solutionStats.Solutions)
+            {
+                <tr>
+                    <td>@solution.Name</td>
+                    <td>@solution.Version</td>
+                    <td>
+                        <p>Number of project : @solution.Projects.Count</p>
+                        <ul>
+                            @foreach (var project in solution.Projects)
+                            {
+                                @if (project.Value != null)
+                                {
+                                    <li>@project.Key</li>
+                                }
+                                else
+                                {
+                                    <li><mark>@project.Key</mark></li>
+                                }
+                            }
+                        </ul>
+                    </td>
+                    <td>@solution.FullPath</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private ProjectStats projectStats;
+    private SolutionStats solutionStats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string path = null ?? throw new InvalidOperationException("Set the path to analyse here");
+        (projectStats, solutionStats) = await scanner.ScanProjects(path);
+    }
+}
